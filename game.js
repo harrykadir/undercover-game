@@ -147,12 +147,34 @@ document.getElementById('btn-start-game').addEventListener('click', ()=>{
 });
 
 // ============================================================
+// MODE TEST — force une paire précise via ?test=slug-du-mot dans l'URL
+// Exemple : https://tonsite.github.io/undercover-game/?test=yoichi-isagi
+// ============================================================
+function getForcedPairFromURL(){
+  const params = new URLSearchParams(window.location.search);
+  const testSlug = params.get('test');
+  if(!testSlug) return null;
+
+  for(const themeKey in WORD_BANK){
+    const theme = WORD_BANK[themeKey];
+    for(const pair of theme.pairs){
+      if(slugify(pair[0]) === testSlug || slugify(pair[1]) === testSlug){
+        return { themeKey, pair };
+      }
+    }
+  }
+  console.warn(`[mode test] Aucun mot ne correspond au slug "${testSlug}"`);
+  return null;
+}
+
+// ============================================================
 // GAME SETUP — build the shuffled card pool
 // ============================================================
 function startGame(){
-  const theme = WORD_BANK[state.themeKey];
+  const forced = getForcedPairFromURL();
+  const theme = forced ? WORD_BANK[forced.themeKey] : WORD_BANK[state.themeKey];
   state.themeLabel = theme.label;
-  const pair = pickRandom(theme.pairs);
+  const pair = forced ? forced.pair : pickRandom(theme.pairs);
   // Randomize which word is "civil" vs "undercover" so it's not always the same slot
   const flip = Math.random() < 0.5;
   const civilWord = flip ? pair[0] : pair[1];
