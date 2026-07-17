@@ -257,6 +257,7 @@
     flex-shrink:0;
     cursor:pointer;
     transition: opacity .25s ease;
+    outline: 3px solid red; /* DEBUG TEMPORAIRE — à retirer après diagnostic */
   }
   .card-3d.taken{
     opacity:0.25;
@@ -269,12 +270,16 @@
   }
   .card-3d.flipped .card-inner{ transform:rotateY(180deg); }
   .card-face{
-    position:absolute; inset:0;
+    position:absolute;
+    top:0; left:0; right:0; bottom:0;
+    width:100%; height:100%;
     border-radius:14px;
     backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
     display:flex; align-items:center; justify-content:center;
     flex-direction:column; gap:8px;
     padding:12px;
+    box-sizing:border-box;
   }
   .card-back{
     background:
@@ -294,9 +299,8 @@
     background-size: cover;
     background-position: center;
     border:1px solid var(--line);
-    transform:rotateY(180deg);
+    transform: rotateY(180deg);
     box-shadow: 0 0 50px rgba(0,0,0,0.5);
-    position:relative;
     overflow:hidden;
   }
   .card-front.has-image{
