@@ -255,12 +255,11 @@
     width:130px; height:190px;
     perspective:1200px;
     cursor:pointer;
-    transition: opacity .25s ease, transform .25s ease;
+    transition: opacity .25s ease, width .45s cubic-bezier(.4,.2,.2,1), height .45s cubic-bezier(.4,.2,.2,1);
   }
   .card-3d.taken{
     opacity:0.25;
     pointer-events:none;
-    transform:scale(0.94);
   }
   .card-3d.active-choice{
     width:190px; height:280px;

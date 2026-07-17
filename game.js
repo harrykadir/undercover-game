@@ -213,11 +213,14 @@ function renderCardGrid(){
     const wrap = document.createElement('div');
     wrap.className = 'card-3d';
     if(card.takenByPlayerIdx !== null) wrap.classList.add('taken');
-    if(state.selectedCardPos === pos) wrap.classList.add('flipped', 'active-choice');
+    const isSelected = state.selectedCardPos === pos;
+    if(isSelected) wrap.classList.add('active-choice');
     wrap.dataset.pos = pos;
 
-    const themeTag = state.selectedCardPos === pos ? state.themeLabel : '';
-    const word = state.selectedCardPos === pos ? card.word : '';
+    // Le mot n'est inséré dans le DOM que pour la carte sélectionnée
+    // (évite de pouvoir inspecter le code source pour tricher sur les autres cartes).
+    const themeTag = isSelected ? state.themeLabel : '';
+    const word = isSelected ? card.word : '';
 
     wrap.innerHTML = `
       <div class="card-inner">
@@ -236,14 +239,18 @@ function renderCardGrid(){
       wrap.addEventListener('click', ()=> onCardPositionClick(pos, wrap));
     }
     cardGridEl.appendChild(wrap);
-  });
 
-  // Applique l'image de fond si une carte est sélectionnée et révélée
-  if(state.selectedCardPos !== null){
-    const card = state.cardPool[state.selectedCardPos];
-    const cardFrontEl = cardGridEl.querySelector(`.card-3d[data-pos="${state.selectedCardPos}"] .card-front`);
-    applyCardImage(cardFrontEl, card.word);
-  }
+    if(isSelected){
+      const cardFrontEl = wrap.querySelector('.card-front');
+      applyCardImage(cardFrontEl, card.word);
+
+      // Laisse le temps à l'agrandissement (active-choice) de s'animer
+      // avant de déclencher le flip, pour un rendu fluide et cohérent.
+      requestAnimationFrame(()=>{
+        setTimeout(()=>{ wrap.classList.add('flipped'); }, 260);
+      });
+    }
+  });
 }
 
 function applyCardImage(cardFrontEl, word){
