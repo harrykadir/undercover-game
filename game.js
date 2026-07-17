@@ -6,13 +6,15 @@ const state = {
   playerCount: 4,
   themeKey: null,
   playerNames: [],
-  order: [],          // ordre de jeu (indices dans playerNames)
+  order: [],          // ordre des joueurs qui vont choisir une carte, dans cet ordre (indices dans playerNames)
   revealIndex: 0,     // index courant dans "order" pendant la révélation
-  assignments: [],    // { name, word, isUndercover }
+  cardPool: [],        // [{ word, isUndercover, takenByPlayerIdx: null|int }] — une entrée par position de carte
+  assignments: [],    // rempli au fur et à mesure : { name, word, isUndercover } indexé par playerIdx
   votes: {},          // playerIndex(voter, dans order) -> playerIndex(cible, dans order)
   voteTurnIndex: 0,
   currentWordPair: null,
-  themeLabel: ""
+  themeLabel: "",
+  selectedCardPos: null // position de carte actuellement sélectionnée par le joueur en cours, avant confirmation
 };
 
 // ---------- Helpers ----------
@@ -38,6 +40,17 @@ function showScreen(id){
 function undercoverCountFor(n){
   // 3 joueurs -> 1 undercover / 4 joueurs -> 1 undercover (toujours 1 seul, quel que soit 3 ou 4)
   return 1;
+}
+
+// Convertit un mot en nom de fichier attendu (slug)
+// Ex: "Yoichi Isagi" -> "yoichi-isagi.png" / "Tetsuya (chien)" -> "tetsuya-chien.png"
+function slugify(word){
+  return word
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // enlève les accents
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 // ============================================================
@@ -134,7 +147,7 @@ document.getElementById('btn-start-game').addEventListener('click', ()=>{
 });
 
 // ============================================================
-// GAME SETUP — assign roles & words
+// GAME SETUP — build the shuffled card pool
 // ============================================================
 function startGame(){
   const theme = WORD_BANK[state.themeKey];
@@ -155,56 +168,86 @@ function startGame(){
   for(let i=0;i<n-ucCount;i++) roles.push('civil');
   const shuffledRoles = shuffle(roles);
 
-  // Random reveal order (order in which players look at cards) — independent shuffle of player indices
-  const revealOrderIdx = shuffle([...Array(n).keys()]);
-
-  // Assignments indexed by player index (0..n-1) matching state.playerNames
-  state.assignments = state.playerNames.map((name, i)=>({
-    name,
-    isUndercover: shuffledRoles[i] === 'undercover',
-    word: shuffledRoles[i] === 'undercover' ? undercoverWord : civilWord
+  // Le pool de cartes : une entrée par position, mélangée aléatoirement.
+  // Les joueurs ne savent pas quelle position contient quel mot.
+  state.cardPool = shuffledRoles.map(role => ({
+    word: role === 'undercover' ? undercoverWord : civilWord,
+    isUndercover: role === 'undercover',
+    takenByPlayerIdx: null
   }));
 
-  // Reveal order = array of player indices in the order they'll view their card
-  state.order = revealOrderIdx;
+  // Ordre dans lequel les joueurs sont appelés à choisir une carte (aléatoire)
+  state.order = shuffle([...Array(n).keys()]);
   state.revealIndex = 0;
+  state.assignments = new Array(n).fill(null);
+  state.selectedCardPos = null;
 
   buildRevealScreen();
   showScreen('screen-reveal');
 }
 
 // ============================================================
-// SCREEN: REVEAL
+// SCREEN: REVEAL — le joueur choisit une carte parmi celles restantes
 // ============================================================
-const cardEl = document.getElementById('reveal-card');
+const cardGridEl = document.getElementById('card-grid');
 const nextBtn = document.getElementById('btn-next-player');
-const cardFrontEl = document.querySelector('.card-front');
-
-// Convertit un mot en nom de fichier attendu (slug)
-// Ex: "Yoichi Isagi" -> "yoichi-isagi.png" / "Tetsuya (chien)" -> "tetsuya-chien.png"
-function slugify(word){
-  return word
-    .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // enlève les accents
-    .replace(/['’]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
 
 function buildRevealScreen(){
-  cardEl.classList.remove('flipped');
   nextBtn.disabled = true;
   nextBtn.textContent = "J'ai vu ma carte →";
+  state.selectedCardPos = null;
 
   const playerIdx = state.order[state.revealIndex];
-  const assignment = state.assignments[playerIdx];
+  const playerName = state.playerNames[playerIdx];
 
-  document.getElementById('reveal-player-name').textContent = assignment.name;
-  document.getElementById('reveal-theme-tag').textContent = state.themeLabel;
-  document.getElementById('reveal-word').textContent = assignment.word;
+  document.getElementById('reveal-player-name').textContent = playerName;
+  document.getElementById('reveal-instructions').textContent =
+    "Choisissez une carte parmi celles restantes, regardez discrètement votre mot, puis retournez-la avant de continuer.";
 
-  // Tente de charger une image correspondante dans /images/
-  const imgPath = `images/${slugify(assignment.word)}.png`;
+  renderCardGrid();
+}
+
+function renderCardGrid(){
+  cardGridEl.innerHTML = '';
+  state.cardPool.forEach((card, pos)=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'card-3d';
+    if(card.takenByPlayerIdx !== null) wrap.classList.add('taken');
+    if(state.selectedCardPos === pos) wrap.classList.add('flipped', 'active-choice');
+    wrap.dataset.pos = pos;
+
+    const themeTag = state.selectedCardPos === pos ? state.themeLabel : '';
+    const word = state.selectedCardPos === pos ? card.word : '';
+
+    wrap.innerHTML = `
+      <div class="card-inner">
+        <div class="card-face card-back">
+          <div class="q">?</div>
+          <div class="hint">${card.takenByPlayerIdx !== null ? 'Prise' : 'Choisir'}</div>
+        </div>
+        <div class="card-face card-front">
+          <div class="theme-tag">${themeTag}</div>
+          <div class="word">${word}</div>
+        </div>
+      </div>
+    `;
+
+    if(card.takenByPlayerIdx === null){
+      wrap.addEventListener('click', ()=> onCardPositionClick(pos, wrap));
+    }
+    cardGridEl.appendChild(wrap);
+  });
+
+  // Applique l'image de fond si une carte est sélectionnée et révélée
+  if(state.selectedCardPos !== null){
+    const card = state.cardPool[state.selectedCardPos];
+    const cardFrontEl = cardGridEl.querySelector(`.card-3d[data-pos="${state.selectedCardPos}"] .card-front`);
+    applyCardImage(cardFrontEl, card.word);
+  }
+}
+
+function applyCardImage(cardFrontEl, word){
+  const imgPath = `images/${slugify(word)}.png`;
   cardFrontEl.classList.remove('has-image');
   cardFrontEl.style.backgroundImage = '';
 
@@ -214,31 +257,34 @@ function buildRevealScreen(){
     cardFrontEl.classList.add('has-image');
   };
   testImg.onerror = () => {
-    // Pas d'image disponible -> on garde l'affichage texte simple (fallback)
     cardFrontEl.classList.remove('has-image');
     cardFrontEl.style.backgroundImage = '';
   };
   testImg.src = imgPath;
-
-  const isLast = state.revealIndex === state.order.length - 1;
-  document.getElementById('reveal-instructions').textContent =
-    "Regardez discrètement votre mot, puis retournez la carte avant de la transmettre.";
 }
 
 let cardClickLocked = false;
-cardEl.addEventListener('click', ()=>{
+function onCardPositionClick(pos, wrapEl){
   if(cardClickLocked) return;
-  if(!cardEl.classList.contains('flipped')){
-    cardEl.classList.add('flipped');
-    nextBtn.disabled = false;
-  } else {
-    // allow flipping back to hide before passing phone
-    cardEl.classList.remove('flipped');
-  }
-});
+  if(state.selectedCardPos !== null) return; // une carte déjà choisie ce tour-ci, on attend la confirmation
+  state.selectedCardPos = pos;
+  renderCardGrid();
+  nextBtn.disabled = false;
+}
 
 nextBtn.addEventListener('click', ()=>{
+  if(state.selectedCardPos === null) return;
   cardClickLocked = true;
+
+  const playerIdx = state.order[state.revealIndex];
+  const card = state.cardPool[state.selectedCardPos];
+  card.takenByPlayerIdx = playerIdx;
+  state.assignments[playerIdx] = {
+    name: state.playerNames[playerIdx],
+    word: card.word,
+    isUndercover: card.isUndercover
+  };
+
   state.revealIndex++;
   if(state.revealIndex < state.order.length){
     buildRevealScreen();

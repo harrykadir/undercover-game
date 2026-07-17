@@ -247,10 +247,23 @@
     font-family:'Georgia', serif; font-size:28px; font-weight:700; color:var(--text);
   }
 
+  .card-grid{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:14px;
+    max-width:460px;
+  }
   .card-3d{
-    width:220px; height:320px;
+    width:130px; height:190px;
     perspective:1200px;
     cursor:pointer;
+    transition: opacity .25s ease, transform .25s ease;
+  }
+  .card-3d.taken{
+    opacity:0.25;
+    pointer-events:none;
+    transform:scale(0.94);
+  }
+  .card-3d.active-choice{
+    width:190px; height:280px;
   }
   .card-inner{
     position:relative; width:100%; height:100%;
@@ -403,7 +416,8 @@
   ::selection{ background:var(--neon-dim); }
 
   @media (max-width:380px){
-    .card-3d{ width:190px; height:280px; }
+    .card-grid .card-3d{ width:105px; height:154px; }
+    .card-grid .card-3d.active-choice{ width:160px; height:236px; }
   }
 </style>
 </head>
@@ -474,21 +488,10 @@
         <div class="player-turn-name" id="reveal-player-name">—</div>
       </div>
 
-      <div class="card-3d" id="reveal-card">
-        <div class="card-inner">
-          <div class="card-face card-back">
-            <div class="q">?</div>
-            <div class="hint">Touchez pour révéler</div>
-          </div>
-          <div class="card-face card-front">
-            <div class="theme-tag" id="reveal-theme-tag">—</div>
-            <div class="word" id="reveal-word">—</div>
-          </div>
-        </div>
-      </div>
+      <div class="card-grid" id="card-grid"></div>
 
       <p class="reveal-instructions" id="reveal-instructions">
-        Regardez discrètement votre mot, puis retournez la carte avant de continuer.
+        Choisissez une carte parmi celles restantes, regardez discrètement votre mot, puis retournez-la avant de continuer.
       </p>
 
       <button class="btn btn-primary" id="btn-next-player" disabled>J'ai vu ma carte →</button>
