@@ -178,6 +178,18 @@ function startGame(){
 // ============================================================
 const cardEl = document.getElementById('reveal-card');
 const nextBtn = document.getElementById('btn-next-player');
+const cardFrontEl = document.querySelector('.card-front');
+
+// Convertit un mot en nom de fichier attendu (slug)
+// Ex: "Yoichi Isagi" -> "yoichi-isagi.png" / "Tetsuya (chien)" -> "tetsuya-chien.png"
+function slugify(word){
+  return word
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // enlève les accents
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 function buildRevealScreen(){
   cardEl.classList.remove('flipped');
@@ -190,6 +202,23 @@ function buildRevealScreen(){
   document.getElementById('reveal-player-name').textContent = assignment.name;
   document.getElementById('reveal-theme-tag').textContent = state.themeLabel;
   document.getElementById('reveal-word').textContent = assignment.word;
+
+  // Tente de charger une image correspondante dans /images/
+  const imgPath = `images/${slugify(assignment.word)}.png`;
+  cardFrontEl.classList.remove('has-image');
+  cardFrontEl.style.backgroundImage = '';
+
+  const testImg = new Image();
+  testImg.onload = () => {
+    cardFrontEl.style.backgroundImage = `url('${imgPath}')`;
+    cardFrontEl.classList.add('has-image');
+  };
+  testImg.onerror = () => {
+    // Pas d'image disponible -> on garde l'affichage texte simple (fallback)
+    cardFrontEl.classList.remove('has-image');
+    cardFrontEl.style.backgroundImage = '';
+  };
+  testImg.src = imgPath;
 
   const isLast = state.revealIndex === state.order.length - 1;
   document.getElementById('reveal-instructions').textContent =
