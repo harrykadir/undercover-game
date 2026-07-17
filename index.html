@@ -307,8 +307,9 @@
   }
   .card-front.has-image::before{
     content:"";
-    position:absolute; inset:0;
-    background: linear-gradient(180deg, rgba(10,13,20,0.15) 0%, rgba(10,13,20,0.55) 55%, rgba(10,13,20,0.92) 100%);
+    position:absolute; left:0; right:0; bottom:0;
+    height:38%;
+    background: linear-gradient(180deg, rgba(10,13,20,0) 0%, rgba(10,13,20,0.75) 55%, rgba(10,13,20,0.92) 100%);
     z-index:0;
   }
   .card-front .theme-tag{
