@@ -240,7 +240,6 @@ function renderCardGrid(){
 
     // Le mot n'est inséré dans le DOM que pour la carte sélectionnée
     // (évite de pouvoir inspecter le code source pour tricher sur les autres cartes).
-    const themeTag = isSelected ? state.themeLabel : '';
     const word = isSelected ? card.word : '';
 
     wrap.innerHTML = `
@@ -250,7 +249,6 @@ function renderCardGrid(){
           <div class="hint">${card.takenByPlayerIdx !== null ? 'Prise' : 'Choisir'}</div>
         </div>
         <div class="card-face card-front">
-          <div class="theme-tag">${themeTag}</div>
           <div class="word">${word}</div>
         </div>
       </div>
