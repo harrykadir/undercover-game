@@ -3,9 +3,9 @@
 Le jeu peut afficher une image en fond de carte pour n'importe quel mot, dans n'importe quel thème.
 Si aucune image n'est trouvée pour un mot, la carte reste en texte simple (aucun risque de casser le jeu).
 
-## Convention de nommage
+## Format et convention de nommage
 
-Chaque image doit être un fichier **PNG**, placé dans le dossier `images/`, et nommé d'après le mot exact
+Chaque image doit être un fichier **JPG ou PNG**, placé dans le dossier `images/`, et nommé d'après le mot exact
 tel qu'il apparaît dans `words.js`, converti en "slug" :
 
 - tout en minuscules
@@ -13,16 +13,19 @@ tel qu'il apparaît dans `words.js`, converti en "slug" :
 - les espaces et caractères spéciaux sont remplacés par des tirets `-`
 - pas de tirets en début/fin de nom
 
+Le jeu cherche d'abord un fichier `.jpg`, puis un `.png` si aucun `.jpg` n'est trouvé pour ce mot.
+Un seul des deux suffit par mot (pas besoin des deux formats en même temps).
+
 ### Exemples
 
-| Mot dans words.js         | Nom de fichier attendu           |
+| Mot dans words.js         | Nom de fichier attendu (exemple en .jpg) |
 |----------------------------|-----------------------------------|
-| `Yoichi Isagi`              | `images/yoichi-isagi.png`         |
-| `Kirua Zoldik`              | `images/kirua-zoldik.png`         |
-| `Tetsuya (chien)`           | `images/tetsuya-chien.png`        |
-| `Kylian Mbappé`             | `images/kylian-mbappe.png`        |
-| `La Reine des fourmis chimères` | `images/la-reine-des-fourmis-chimeres.png` |
-| `Bob l'éponge`              | `images/bob-l-eponge.png`         |
+| `Yoichi Isagi`              | `images/yoichi-isagi.jpg`         |
+| `Kirua Zoldik`              | `images/kirua-zoldik.jpg`         |
+| `Tetsuya (chien)`           | `images/tetsuya-chien.jpg`        |
+| `Kylian Mbappé`             | `images/kylian-mbappe.jpg`        |
+| `La Reine des fourmis chimères` | `images/la-reine-des-fourmis-chimeres.jpg` |
+| `Bob l'éponge`              | `images/bob-l-eponge.jpg` (ou `.png`)
 
 ## Format recommandé
 

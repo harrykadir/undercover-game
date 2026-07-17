@@ -253,20 +253,25 @@ function renderCardGrid(){
 }
 
 function applyCardImage(cardFrontEl, word){
-  const imgPath = `images/${slugify(word)}.png`;
+  const slug = slugify(word);
+  const extensions = ['jpg', 'png']; // ordre d'essai : jpg d'abord, puis png en repli
+
   cardFrontEl.classList.remove('has-image');
   cardFrontEl.style.backgroundImage = '';
 
-  const testImg = new Image();
-  testImg.onload = () => {
-    cardFrontEl.style.backgroundImage = `url('${imgPath}')`;
-    cardFrontEl.classList.add('has-image');
-  };
-  testImg.onerror = () => {
-    cardFrontEl.classList.remove('has-image');
-    cardFrontEl.style.backgroundImage = '';
-  };
-  testImg.src = imgPath;
+  function tryExtension(index){
+    if(index >= extensions.length) return; // aucune image trouvée -> reste en texte simple
+    const imgPath = `images/${slug}.${extensions[index]}`;
+    const testImg = new Image();
+    testImg.onload = () => {
+      cardFrontEl.style.backgroundImage = `url('${imgPath}')`;
+      cardFrontEl.classList.add('has-image');
+    };
+    testImg.onerror = () => tryExtension(index + 1);
+    testImg.src = imgPath;
+  }
+
+  tryExtension(0);
 }
 
 let cardClickLocked = false;
