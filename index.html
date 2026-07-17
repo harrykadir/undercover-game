@@ -248,21 +248,19 @@
   }
 
   .card-grid{
-    display:flex; flex-wrap:wrap; justify-content:center; gap:14px;
-    max-width:460px;
+    display:flex; flex-wrap:nowrap; justify-content:center; gap:12px;
+    max-width:100%;
   }
   .card-3d{
-    width:130px; height:190px;
+    width:150px; height:220px;
+    flex-shrink:0;
     perspective:1200px;
     cursor:pointer;
-    transition: opacity .25s ease, width .45s cubic-bezier(.4,.2,.2,1), height .45s cubic-bezier(.4,.2,.2,1);
+    transition: opacity .25s ease;
   }
   .card-3d.taken{
     opacity:0.25;
     pointer-events:none;
-  }
-  .card-3d.active-choice{
-    width:190px; height:280px;
   }
   .card-inner{
     position:relative; width:100%; height:100%;
@@ -272,11 +270,11 @@
   .card-3d.flipped .card-inner{ transform:rotateY(180deg); }
   .card-face{
     position:absolute; inset:0;
-    border-radius:18px;
+    border-radius:14px;
     backface-visibility:hidden;
     display:flex; align-items:center; justify-content:center;
-    flex-direction:column; gap:14px;
-    padding:20px;
+    flex-direction:column; gap:8px;
+    padding:12px;
   }
   .card-back{
     background:
@@ -286,10 +284,10 @@
     box-shadow: 0 0 40px rgba(57,255,158,0.08), inset 0 0 60px rgba(0,0,0,0.4);
   }
   .card-back .q{
-    font-size:64px; color:var(--text-faint); opacity:0.5;
+    font-size:44px; color:var(--text-faint); opacity:0.5;
   }
   .card-back .hint{
-    font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text-faint);
+    font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text-faint);
   }
   .card-front{
     background: linear-gradient(160deg, #1a2130, var(--bg-0));
@@ -316,7 +314,7 @@
   }
   .card-front .word{
     font-family:'Georgia', serif;
-    font-size:24px; font-weight:700; text-align:center; line-height:1.25;
+    font-size:18px; font-weight:700; text-align:center; line-height:1.25;
     color:var(--text);
     position:relative; z-index:1;
     text-shadow: 0 2px 12px rgba(0,0,0,0.8);
@@ -415,8 +413,12 @@
   ::selection{ background:var(--neon-dim); }
 
   @media (max-width:380px){
-    .card-grid .card-3d{ width:105px; height:154px; }
-    .card-grid .card-3d.active-choice{ width:160px; height:236px; }
+    .card-grid{ gap:8px; }
+    .card-grid .card-3d{ width:78px; height:114px; }
+  }
+  @media (min-width:381px) and (max-width:480px){
+    .card-grid{ gap:10px; }
+    .card-grid .card-3d{ width:100px; height:146px; }
   }
 </style>
 </head>

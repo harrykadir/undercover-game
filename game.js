@@ -214,7 +214,6 @@ function renderCardGrid(){
     wrap.className = 'card-3d';
     if(card.takenByPlayerIdx !== null) wrap.classList.add('taken');
     const isSelected = state.selectedCardPos === pos;
-    if(isSelected) wrap.classList.add('active-choice');
     wrap.dataset.pos = pos;
 
     // Le mot n'est inséré dans le DOM que pour la carte sélectionnée
@@ -244,10 +243,10 @@ function renderCardGrid(){
       const cardFrontEl = wrap.querySelector('.card-front');
       applyCardImage(cardFrontEl, card.word);
 
-      // Laisse le temps à l'agrandissement (active-choice) de s'animer
-      // avant de déclencher le flip, pour un rendu fluide et cohérent.
+      // Déclenche le flip juste après l'insertion dans le DOM (taille toujours fixe,
+      // donc l'animation de retournement est fluide immédiatement).
       requestAnimationFrame(()=>{
-        setTimeout(()=>{ wrap.classList.add('flipped'); }, 260);
+        wrap.classList.add('flipped');
       });
     }
   });
