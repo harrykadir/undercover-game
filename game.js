@@ -10,8 +10,7 @@ const state = {
   revealIndex: 0,     // index courant dans "order" pendant la révélation
   cardPool: [],        // [{ word, isUndercover, takenByPlayerIdx: null|int }] — une entrée par position de carte
   assignments: [],    // rempli au fur et à mesure : { name, word, isUndercover } indexé par playerIdx
-  votes: {},          // playerIndex(voter, dans order) -> playerIndex(cible, dans order)
-  voteTurnIndex: 0,
+  designatedSuspectIdx: null, // joueur désigné collectivement comme suspect (indexé dans playerNames)
   currentWordPair: null,
   themeLabel: "",
   selectedCardPos: null // position de carte actuellement sélectionnée par le joueur en cours, avant confirmation
@@ -344,86 +343,45 @@ function buildOrderScreen(){
 }
 
 document.getElementById('btn-goto-vote').addEventListener('click', ()=>{
-  state.votes = {};
-  state.voteTurnIndex = 0;
+  state.designatedSuspectIdx = null;
   buildVoteScreen();
   showScreen('screen-vote');
 });
 
 // ============================================================
-// SCREEN: VOTE — each player votes in turn (pass the phone)
+// SCREEN: VOTE — désignation collective à main levée (un seul écran, un seul choix)
 // ============================================================
-let currentVoteSelection = null;
-
 function buildVoteScreen(){
-  currentVoteSelection = null;
-  const voterPlayerIdx = state.order[state.voteTurnIndex] !== undefined
-    ? state.order[state.voteTurnIndex]
-    : null;
-
-  const voterName = state.assignments[voterPlayerIdx].name;
-  document.getElementById('vote-turn-label').textContent = `Vote de ${voterName}`;
-
   const grid = document.getElementById('vote-grid');
   grid.innerHTML = '';
   state.assignments.forEach((a, idx)=>{
-    if(idx === voterPlayerIdx) return; // can't vote for yourself
     const card = document.createElement('div');
     card.className = 'vote-card';
     card.innerHTML = `<div class="pname">${a.name}</div><div class="radio"></div>`;
     card.addEventListener('click', ()=>{
       document.querySelectorAll('.vote-card').forEach(c=>c.classList.remove('selected'));
       card.classList.add('selected');
-      currentVoteSelection = idx;
+      state.designatedSuspectIdx = idx;
       document.getElementById('btn-confirm-vote').disabled = false;
     });
     grid.appendChild(card);
   });
 
   document.getElementById('btn-confirm-vote').disabled = true;
-  document.getElementById('btn-confirm-vote').textContent =
-    state.voteTurnIndex === state.playerCount - 1 ? "Valider et voir le résultat →" : "Valider le vote →";
 }
 
 document.getElementById('btn-confirm-vote').addEventListener('click', ()=>{
-  const voterPlayerIdx = state.order[state.voteTurnIndex];
-  state.votes[voterPlayerIdx] = currentVoteSelection;
-
-  state.voteTurnIndex++;
-  if(state.voteTurnIndex < state.playerCount){
-    buildVoteScreen();
-  } else {
-    computeResult();
-    showScreen('screen-result');
-  }
+  computeResult();
+  showScreen('screen-result');
 });
 
 // ============================================================
 // SCREEN: RESULT
 // ============================================================
 function computeResult(){
-  // Tally votes
-  const tally = {};
-  Object.values(state.votes).forEach(targetIdx=>{
-    tally[targetIdx] = (tally[targetIdx]||0) + 1;
-  });
-
-  // Find max votes
-  let maxVotes = -1;
-  let topTargets = [];
-  Object.entries(tally).forEach(([idx, count])=>{
-    idx = parseInt(idx);
-    if(count > maxVotes){
-      maxVotes = count;
-      topTargets = [idx];
-    } else if(count === maxVotes){
-      topTargets.push(idx);
-    }
-  });
-
   const undercoverIdx = state.assignments.findIndex(a=>a.isUndercover);
-  const isUniqueMajority = topTargets.length === 1;
-  const civilsWin = isUniqueMajority && topTargets[0] === undercoverIdx;
+  const suspectIdx = state.designatedSuspectIdx;
+  const civilsWin = suspectIdx === undercoverIdx;
 
   const badge = document.getElementById('result-badge');
   const title = document.getElementById('result-title');
@@ -433,15 +391,11 @@ function computeResult(){
     badge.className = 'result-badge badge-win';
     badge.textContent = '✓ Civils victorieux';
     title.textContent = `${state.assignments[undercoverIdx].name} était l'undercover !`;
-    sub.textContent = 'Démasqué à la majorité des votes.';
+    sub.textContent = 'Démasqué par le groupe.';
   } else {
     badge.className = 'result-badge badge-lose';
     badge.textContent = '✕ Undercover victorieux';
-    if(!isUniqueMajority){
-      title.textContent = 'Égalité des votes — personne n\'est démasqué';
-    } else {
-      title.textContent = `${state.assignments[topTargets[0]].name} n'était pas l'undercover`;
-    }
+    title.textContent = `${state.assignments[suspectIdx].name} n'était pas l'undercover`;
     sub.textContent = `En réalité, ${state.assignments[undercoverIdx].name} était l'undercover.`;
   }
 
